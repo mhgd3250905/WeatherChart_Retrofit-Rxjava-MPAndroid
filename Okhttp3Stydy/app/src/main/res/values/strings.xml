@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Okhttp3Stydy</string>
+    <string name="future_weather_day">未来日间气温</string>
+    <string name="future_weather_night">未来夜间气温</string>
+</resources>
