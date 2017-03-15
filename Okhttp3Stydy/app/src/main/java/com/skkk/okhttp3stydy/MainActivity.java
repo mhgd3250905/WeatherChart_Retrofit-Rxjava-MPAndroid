@@ -2,12 +2,11 @@ package com.skkk.okhttp3stydy;
 
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.constraint.ConstraintLayout;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -23,6 +22,8 @@ import com.github.mikephil.charting.formatter.IAxisValueFormatter;
 import com.github.mikephil.charting.formatter.IValueFormatter;
 import com.github.mikephil.charting.utils.ViewPortHandler;
 import com.skkk.okhttp3stydy.Gson.Weather;
+import com.skkk.okhttp3stydy.Gson.Weather3HoursDetailsInfo;
+import com.skkk.okhttp3stydy.Gson.WeatherDetailsInfo;
 import com.skkk.okhttp3stydy.Gson.WeatherGson;
 
 import java.util.ArrayList;
@@ -31,34 +32,35 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import cn.bingoogolapple.refreshlayout.BGARefreshLayout;
 import retrofit2.Call;
-import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
-import retrofit2.converter.gson.GsonConverterFactory;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements BGARefreshLayout.BGARefreshLayoutDelegate {
 
     @BindView(R.id.editText)
     EditText mEditText;
     @BindView(R.id.button2)
     Button mButton2;
     @BindView(R.id.activity_main)
-    ConstraintLayout mActivityMain;
-    @BindView(R.id.textView)
-    TextView mTextView;
-    @BindView(R.id.lineChart)
-    LineChart mLineChart;
+    NestedScrollView mActivityMain;
+    @BindView(R.id.lc_weather_future)
+    LineChart mDayLineChart;
+    @BindView(R.id.lc_weather_detail)
+    LineChart mInfoLineChart;
     private Call call;
     private String text = "";
     private IAxisValueFormatter xFormatter;
     private IAxisValueFormatter yFormatter;
+    private IAxisValueFormatter infoXFormatter;
+    private IAxisValueFormatter infoYFormatter;
     private IValueFormatter vFormatter;
     private String[] days = new String[7];
+    private String[] times = new String[9];
     private IMarker mIMarker;
 
     @Override
@@ -89,27 +91,39 @@ public class MainActivity extends AppCompatActivity {
 
     @OnClick(R.id.button2)
     public void onClick() {
-        String baseUrl = "http://aider.meizu.com/";
-        Retrofit retrofit = new Retrofit.Builder()
-                .addConverterFactory(GsonConverterFactory.create())
-                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
-                .baseUrl(baseUrl)
-                .build();
+        WeatherInterface weatherInterface = HttpUtils.getInstance().getWeatherInterface();
 
-        Log.d("MainActivity", "Retrofit build 完毕");
-
-        WeatherInterface weatherInterface = retrofit.create(WeatherInterface.class);
         Observable<WeatherGson> weatherRequest = weatherInterface.getWeather("101020600");
-
         weatherRequest.subscribeOn(Schedulers.newThread())
                 .subscribeOn(Schedulers.io())
                 .map(new Func1<WeatherGson, List<LineDataSet>>() {
                     @Override
                     public List<LineDataSet> call(WeatherGson weatherGson) {
                         //获取未来天气
+                        WeatherDetailsInfo weatherDetailsInfo = weatherGson.getValue().get(0).getWeatherDetailsInfo();
+                        String publishTime = weatherDetailsInfo.getPublishTime();
+
+                        List<Weather3HoursDetailsInfo> weather3HoursDetailsInfos = weatherDetailsInfo.getWeather3HoursDetailsInfos();
+                        List<Entry> entryInfoListH=new ArrayList<Entry>();
+                        List<Entry> entryInfoListL=new ArrayList<Entry>();
+
+                        for (int i = 0; i < weather3HoursDetailsInfos.size(); i++) {
+                            //获取一天中的最高温和最低温的曲线
+                            entryInfoListH.add(new Entry(i,Float.valueOf(weather3HoursDetailsInfos.get(i).getHighestTemperature())));
+                            entryInfoListL.add(new Entry(i,Float.valueOf(weather3HoursDetailsInfos.get(i).getLowerestTemperature())));
+                            //将时间放到数组中
+                            times[i]= weather3HoursDetailsInfos.get(i).getStartTime();
+
+                        }
+                        //设置X轴的格式
+                        infoXFormatter = new IAxisValueFormatter() {
+                            @Override
+                            public String getFormattedValue(float value, AxisBase axis) {
+                                return times[(int) value].split(" ")[1].split(":")[0]+"时";
+                            }
+                        };
+
                         List<Weather> weathers = weatherGson.getValue().get(0).getWeathers();
-
-
                         List<Entry> entryListD = new ArrayList<Entry>();
                         List<Entry> entryListN = new ArrayList<Entry>();
 
@@ -132,6 +146,8 @@ public class MainActivity extends AppCompatActivity {
                         List<LineDataSet> lineDataSetList = new ArrayList<LineDataSet>();
                         lineDataSetList.add(new LineDataSet(entryListD, getString(R.string.future_weather_day)));
                         lineDataSetList.add(new LineDataSet(entryListN, getString(R.string.future_weather_night)));
+                        lineDataSetList.add(new LineDataSet(entryInfoListH,getString(R.string.future_high_temp)));
+                        lineDataSetList.add(new LineDataSet(entryInfoListL,getString(R.string.future_low_temp)));
 
                         //返回直线图数据对象
                         return lineDataSetList;
@@ -180,46 +196,66 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * 设置图表
-
+     *
      * @param dataSetList 折线图数据
      */
     private void showChart(List<LineDataSet> dataSetList) {
         //设置日间温度曲线
         dataSetList.get(0).setMode(LineDataSet.Mode.HORIZONTAL_BEZIER);
-        dataSetList.get(0).setColor(getResources().getColor(R.color.colorAccent));
+        dataSetList.get(0).setColor(ContextCompat.getColor(this,R.color.colorAccent));
         dataSetList.get(0).setDrawCircleHole(false);
         dataSetList.get(0).setDrawCircles(false);
 
+        dataSetList.get(2).setMode(LineDataSet.Mode.HORIZONTAL_BEZIER);
+        dataSetList.get(2).setColor(ContextCompat.getColor(this,R.color.colorAccent));
+        dataSetList.get(2).setDrawCircleHole(false);
+        dataSetList.get(2).setDrawCircles(false);
+
         //设置晚间温度曲线
         dataSetList.get(1).setMode(LineDataSet.Mode.HORIZONTAL_BEZIER);
-        dataSetList.get(1).setColor(getResources().getColor(R.color.colorPrimaryDark));
+        dataSetList.get(1).setColor(ContextCompat.getColor(this,R.color.colorPrimaryDark));
         dataSetList.get(1).setDrawCircleHole(false);
         dataSetList.get(1).setDrawCircles(false);
 
+        dataSetList.get(3).setMode(LineDataSet.Mode.HORIZONTAL_BEZIER);
+        dataSetList.get(3).setColor(ContextCompat.getColor(this,R.color.colorPrimaryDark));
+        dataSetList.get(3).setDrawCircleHole(false);
+        dataSetList.get(3).setDrawCircles(false);
+
         //设置数据
-        LineData lineData = new LineData();
-        for (LineDataSet lineDataSet : dataSetList) {
-            lineData.addDataSet(lineDataSet);
+        LineData dayLineData = new LineData();
+        LineData infoLineData = new LineData();
+        for (int i = 0; i < dataSetList.size(); i++) {
+            if (i<2){
+                dayLineData.addDataSet(dataSetList.get(i));
+            }else {
+                infoLineData.addDataSet(dataSetList.get(i));
+            }
         }
-        lineData.setValueFormatter(vFormatter);
-        lineData.setValueTextSize(8f);
-        lineData.setValueTextColor(Color.BLACK);
+
+        dayLineData.setValueFormatter(vFormatter);
+        dayLineData.setValueTextSize(8f);
+        dayLineData.setValueTextColor(Color.BLACK);
+
+        infoLineData.setValueFormatter(vFormatter);
+        infoLineData.setValueTextSize(8f);
+        infoLineData.setValueTextColor(Color.BLACK);
 
 
         //设置X轴
-        XAxis xAxis = mLineChart.getXAxis();
-        xAxis.setDrawGridLines(false);
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setValueFormatter(xFormatter);
+        XAxis dayXAxis = mDayLineChart.getXAxis();
+        dayXAxis.setDrawGridLines(false);
+        dayXAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        dayXAxis.setValueFormatter(xFormatter);
 
         //设置Y轴right
-        YAxis axisRight = mLineChart.getAxisRight();
+        YAxis axisRight = mDayLineChart.getAxisRight();
         axisRight.setDrawAxisLine(false);
         axisRight.setDrawGridLines(false);
         axisRight.setDrawLabels(false);
 
         //设置Y轴left
-        YAxis axisLeft = mLineChart.getAxisLeft();
+        YAxis axisLeft = mDayLineChart.getAxisLeft();
         axisLeft.setDrawAxisLine(false);
         axisLeft.setDrawGridLines(false);
         axisLeft.setDrawLabels(false);
@@ -229,15 +265,57 @@ public class MainActivity extends AppCompatActivity {
         description.setText("气温预测图");
         description.setTextSize(15f);
         description.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
-        mLineChart.setDescription(description);
-        mLineChart.setData(lineData);
-        mLineChart.setMarker(mIMarker);
-        mLineChart.invalidate();
+        mDayLineChart.setDescription(description);
+        mDayLineChart.setData(dayLineData);
+        mDayLineChart.setMarker(mIMarker);
+        mDayLineChart.invalidate();
+
+        //设置X轴
+        XAxis infoXAxis = mInfoLineChart.getXAxis();
+        infoXAxis.setDrawAxisLine(true);
+        infoXAxis.setDrawGridLines(false);
+        infoXAxis.setDrawLabels(true);
+        infoXAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        infoXAxis.setValueFormatter(infoXFormatter);
+
+        //设置Y轴right
+        YAxis infoAxisRight = mInfoLineChart.getAxisRight();
+        infoAxisRight.setDrawAxisLine(false);
+        infoAxisRight.setDrawGridLines(false);
+        infoAxisRight.setDrawLabels(false);
+
+        //设置Y轴left
+        YAxis infoAxisLeft = mInfoLineChart.getAxisLeft();
+        infoAxisLeft.setDrawAxisLine(false);
+        infoAxisLeft.setDrawGridLines(false);
+        infoAxisLeft.setDrawLabels(false);
+
+        //设置chart
+        Description description2 = new Description();
+        description2.setText("气温预测图");
+        description2.setTextSize(15f);
+        description2.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
+        mInfoLineChart.setDescription(description2);
+        mInfoLineChart.setData(infoLineData);
+        mInfoLineChart.setMarker(mIMarker);
+        mInfoLineChart.invalidate();
+
+
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 //        call.cancel();
+    }
+
+    @Override
+    public void onBGARefreshLayoutBeginRefreshing(BGARefreshLayout refreshLayout) {
+
+    }
+
+    @Override
+    public boolean onBGARefreshLayoutBeginLoadingMore(BGARefreshLayout refreshLayout) {
+        return false;
     }
 }

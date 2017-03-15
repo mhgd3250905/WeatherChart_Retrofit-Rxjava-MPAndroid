@@ -2,4 +2,6 @@
     <string name="app_name">Okhttp3Stydy</string>
     <string name="future_weather_day">未来日间气温</string>
     <string name="future_weather_night">未来夜间气温</string>
+    <string name="future_high_temp">近期最高气温预测</string>
+    <string name="future_low_temp">近期最低气温预测</string>
 </resources>

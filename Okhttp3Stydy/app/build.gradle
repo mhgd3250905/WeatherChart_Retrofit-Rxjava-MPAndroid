@@ -42,5 +42,7 @@ dependencies {
 
     compile files('libs/gson-2.6.2.jar')
 
+    //下拉刷新框架
+    compile 'cn.bingoogolapple:bga-refreshlayout:1.1.7@aar'
     compile 'com.github.PhilJay:MPAndroidChart:v3.0.1'
 }

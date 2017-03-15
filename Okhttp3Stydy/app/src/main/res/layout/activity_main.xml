@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<android.support.v4.widget.NestedScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
@@ -12,50 +11,35 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.skkk.okhttp3stydy.MainActivity">
 
-    <EditText
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:inputType="textPersonName"
-        android:text="OKhttp Demo"
-        android:gravity="center"
-        android:ems="10"
-        android:id="@+id/editText"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPersonName"
+            android:text="Demo"
+            android:gravity="center"
+            android:ems="10"
+            android:id="@+id/editText"
+            />
+        <Button
+            android:text="下载图片"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/button2"
+            />
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/lc_weather_future"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            ></com.github.mikephil.charting.charts.LineChart>
 
-    <Button
-        android:text="下载图片"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:id="@+id/button2"
-        android:layout_marginTop="8dp"
-        app:layout_constraintTop_toBottomOf="@+id/editText"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintVertical_bias="0.0"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent" />
-
-    <TextView
-        android:visibility="gone"
-        android:hint="Hello World!"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:id="@+id/textView"
-        app:layout_constraintTop_toBottomOf="@+id/button2"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
-
-    <com.github.mikephil.charting.charts.LineChart
-        android:id="@+id/lineChart"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@+id/button2"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"></com.github.mikephil.charting.charts.LineChart>
-
-</android.support.constraint.ConstraintLayout>
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/lc_weather_detail"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            ></com.github.mikephil.charting.charts.LineChart>
+    </LinearLayout>
+</android.support.v4.widget.NestedScrollView>
