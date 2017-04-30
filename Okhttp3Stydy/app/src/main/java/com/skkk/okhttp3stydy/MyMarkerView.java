@@ -48,9 +48,21 @@ public class MyMarkerView extends MarkerView {
         super.refreshContent(e, highlight);
     }
 
+    /**
+     * 设置绘制的左上角的偏移坐标
+     * @param posX value点的X
+     * @param posY value点的Y
+     * @return  偏移坐标
+     */
     @Override
     public MPPointF getOffsetForDrawingAtPoint(float posX, float posY) {
         offset2.x=getOffset().getX();
+        if(posX>getChartView().getRight()/2){
+            //如果右边界超过chart右边界，设置MarkView固定于左上角
+            offset2.x=-getWidth();
+        }else if (posX<getChartView().getRight()/2){
+            offset2.x=0f;
+        }
         offset2.y=-posY+getChartView().getViewPortHandler().offsetTop();
         return offset2;
     }
