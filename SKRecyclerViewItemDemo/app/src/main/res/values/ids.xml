@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="rv_fragment" type="id">rv_fragment</item>
+    <item name="tv_item_recylcer" type="id">tv_item_recylcer</item>
+    <item name="iv_item_move" type="id">iv_item_move</item>
+    <item name="fl_container" type="id">fl_container</item>
+</resources>

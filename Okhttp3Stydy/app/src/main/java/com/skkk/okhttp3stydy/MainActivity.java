@@ -144,6 +144,7 @@ public class MainActivity extends AppCompatActivity implements BGARefreshLayout.
                         };
 
                         List<LineDataSet> lineDataSetList = new ArrayList<LineDataSet>();
+
                         lineDataSetList.add(new LineDataSet(entryListD, getString(R.string.future_weather_day)));
                         lineDataSetList.add(new LineDataSet(entryListN, getString(R.string.future_weather_night)));
                         lineDataSetList.add(new LineDataSet(entryInfoListH,getString(R.string.future_high_temp)));
@@ -286,9 +287,11 @@ public class MainActivity extends AppCompatActivity implements BGARefreshLayout.
 
         //设置Y轴left
         YAxis infoAxisLeft = mInfoLineChart.getAxisLeft();
-        infoAxisLeft.setDrawAxisLine(false);
+        infoAxisLeft.setDrawAxisLine(true);
         infoAxisLeft.setDrawGridLines(false);
-        infoAxisLeft.setDrawLabels(false);
+        infoAxisLeft.setDrawLabels(true);
+        infoAxisLeft.setPosition(YAxis.YAxisLabelPosition.INSIDE_CHART);
+
 
         //设置chart
         Description description2 = new Description();
@@ -298,8 +301,10 @@ public class MainActivity extends AppCompatActivity implements BGARefreshLayout.
         mInfoLineChart.setDescription(description2);
         mInfoLineChart.setData(infoLineData);
         mInfoLineChart.setMarker(mIMarker);
-        mInfoLineChart.invalidate();
 
+        mInfoLineChart.fitScreen();
+        mInfoLineChart.setViewPortOffsets(0,0,0,0);
+        mInfoLineChart.invalidate();
 
     }
 
